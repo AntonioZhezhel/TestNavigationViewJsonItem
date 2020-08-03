@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.core.view.GravityCompat
 import com.example.testnavigationviewjsonitem.ui.ImageFragment
@@ -14,9 +13,6 @@ import com.example.testnavigationviewjsonitem.ui.WebFragment
 import com.google.android.material.navigation.NavigationView
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
-import kotlinx.android.synthetic.main.content_main.*
-import kotlinx.android.synthetic.main.fragment_text.*
-import kotlinx.android.synthetic.main.nav_header_main.*
 import org.json.JSONObject
 import java.io.IOException
 import java.io.InputStream
@@ -40,9 +36,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
 
         addMenuItemInNavMenuDrawer()
-        when {
-               savedInstanceState == null ->
-            lV.performItemClick(lV,0,0)
+        when (savedInstanceState) {
+            null ->
+                listViewContainer.performItemClick(listViewContainer,0,0)
         }
 
     }
@@ -62,7 +58,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         drawer_layout.closeDrawer(GravityCompat.START)
         return true    }
 
-    private val arr = ArrayList<String>()
+    private val name = ArrayList<String>()
     private val func = ArrayList<String>()
     private val param = ArrayList<String>()
     private val bundle = Bundle()
@@ -90,7 +86,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             for (i in 0 until jsonArray.length()) {
                 var jsonObj = jsonArray.getJSONObject(i)
 
-                arr.add(jsonObj.getString("name"))
+                name.add(jsonObj.getString("name"))
                 func.add(jsonObj.getString("function"))
                 param.add(jsonObj.getString("param"))
 
@@ -98,16 +94,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
 
             }
-            var ad = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, arr)
-            lV.adapter = ad
+            var ad = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, name)
+            listViewContainer.adapter = ad
 
 
-
-
-            lV.onItemClickListener= AdapterView.OnItemClickListener { _, _, position, _ ->
-                Toast.makeText(this, param[position], Toast.LENGTH_LONG).show()
-
-
+            listViewContainer.onItemClickListener= AdapterView.OnItemClickListener { _, _, position, _ ->
 
                 when {
                     func[position] == "text" -> {
