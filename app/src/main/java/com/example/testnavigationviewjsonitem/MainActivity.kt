@@ -13,6 +13,7 @@ import com.example.testnavigationviewjsonitem.ui.WebFragment
 import com.google.android.material.navigation.NavigationView
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
+import okhttp3.*
 import org.json.JSONObject
 import java.io.IOException
 import java.io.InputStream
@@ -65,81 +66,87 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private val imageFragment = ImageFragment()
     private val textFragment = TextFragment()
     private val webFragment = WebFragment()
+    private val URL = "https://www.dropbox.com/s/fk3d5kg6cptkpr6/menu.json?dl=1"
+    private var okHttpClient: OkHttpClient = OkHttpClient()
 
 
     private fun addMenuItemInNavMenuDrawer() {
 
 
+        val request: Request = Request.Builder().url(URL).build()
+        okHttpClient.newCall(request).enqueue(object : Callback {
 
-        var json: String? = null
-
-        try {
-
-            val inputStream: InputStream = assets.open("MainJson.json")
-            json = inputStream.bufferedReader().use { it.readText() }
-
-            var menu = JSONObject(json)
-            var jsonArray = menu.getJSONArray("menu")
-
-
-
-            for (i in 0 until jsonArray.length()) {
-                var jsonObj = jsonArray.getJSONObject(i)
-
-                name.add(jsonObj.getString("name"))
-                func.add(jsonObj.getString("function"))
-                param.add(jsonObj.getString("param"))
-
-
-
-
+            override fun onFailure(call: Call, e: IOException) {
+                TODO("Not yet implemented")
             }
-            var ad = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, name)
-            listViewContainer.adapter = ad
+
+            override fun onResponse(call: Call, response: Response) {
+                val json = response.body?.string()
+                var menu = JSONObject(json)
+                val jsonArray = menu.getJSONArray("menu")
+
+                for (i in 0 until jsonArray.length()) {
+                    var jsonObj = jsonArray.getJSONObject(i)
+
+                    name.add(jsonObj.getString("name"))
+                    func.add(jsonObj.getString("function"))
+                    param.add(jsonObj.getString("param"))
 
 
-            listViewContainer.onItemClickListener= AdapterView.OnItemClickListener { _, _, position, _ ->
+                    runOnUiThread {
+                        var ad = ArrayAdapter<String>(
+                            this@MainActivity,
+                            android.R.layout.simple_list_item_1,
+                            name
+                        )
+                        listViewContainer.adapter = ad
 
-                when {
-                    func[position] == "text" -> {
-                        supportFragmentManager.beginTransaction()
-                            .detach(textFragment)
-                            .attach(textFragment)
-                            .replace( R.id.fragmentLayoutContainer,textFragment)
-                            .commit()
-                        bundle.putString("key", param[position])
-                        textFragment.arguments = bundle
 
+                        listViewContainer.onItemClickListener =
+                            AdapterView.OnItemClickListener { _, _, position, _ ->
+
+                                when {
+                                    func[position] == "text" -> {
+                                        supportFragmentManager.beginTransaction()
+                                            .detach(textFragment)
+                                            .attach(textFragment)
+                                            .replace(R.id.fragmentLayoutContainer, textFragment)
+                                            .commit()
+                                        bundle.putString("key", param[position])
+                                        textFragment.arguments = bundle
+
+                                    }
+                                    func[position] == "image" -> {
+                                        bundle.putString("key", param[position])
+                                        imageFragment.arguments = bundle
+                                        supportFragmentManager.beginTransaction()
+                                            .detach(imageFragment)
+                                            .attach(imageFragment)
+                                            .replace(R.id.fragmentLayoutContainer, imageFragment)
+                                            .commit()
+                                    }
+                                    func[position] == "url" -> {
+                                        bundle.putString("key", param[position])
+                                        webFragment.arguments = bundle
+                                        supportFragmentManager.beginTransaction()
+                                            .detach(webFragment)
+                                            .attach(webFragment)
+                                            .replace(R.id.fragmentLayoutContainer, webFragment)
+                                            .commit()
+                                    }
+                                }
+
+                                drawer_layout.closeDrawer(GravityCompat.START)
+                            }
                     }
-                    func[position] == "image" -> {
-                        bundle.putString("key", param[position])
-                        imageFragment.arguments = bundle
-                        supportFragmentManager.beginTransaction()
-                            .detach(imageFragment)
-                            .attach(imageFragment)
-                            .replace(R.id.fragmentLayoutContainer, imageFragment)
-                            .commit()
-                    }
-                    func[position] == "url" -> {
-                        bundle.putString("key", param[position])
-                        webFragment.arguments = bundle
-                        supportFragmentManager.beginTransaction()
-                            .detach(webFragment)
-                            .attach(webFragment)
-                            .replace(R.id.fragmentLayoutContainer, webFragment)
-                            .commit()
-                    }
+
                 }
 
-                drawer_layout.closeDrawer(GravityCompat.START)
+
             }
 
 
-
-        } catch (e: IOException) {
-
-        }
-        nav_view.invalidate()
+        })
     }
 
 }
